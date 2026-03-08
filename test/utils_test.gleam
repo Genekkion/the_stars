@@ -33,4 +33,3 @@ pub fn clamp_float_test() {
   utils.clamp_float(3.2, 1.0, 3.2)
   |> should.equal(3.2)
 }
-
