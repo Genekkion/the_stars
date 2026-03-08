@@ -1,4 +1,4 @@
-import errors
+import the_stars/errors
 import gleam/float
 import gleam/int
 import gleam/string

@@ -1,8 +1,8 @@
-import color
 import gleam/dict
 import gleam/io
 import gleam/string
-import styles
+import the_stars/color
+import the_stars/styles
 
 pub type LogLevel {
   Debug

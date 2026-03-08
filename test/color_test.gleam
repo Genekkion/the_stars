@@ -1,4 +1,4 @@
-import color
+import the_stars/color
 import gleeunit
 import gleeunit/should
 

@@ -1,4 +1,4 @@
-import color
+import the_stars/color
 import gleam/int
 import gleam/list
 import gleam/string
