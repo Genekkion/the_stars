@@ -1,7 +1,6 @@
 import color
 import gleeunit
 import gleeunit/should
-import utils
 
 pub fn main() {
   gleeunit.main()

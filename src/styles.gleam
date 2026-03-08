@@ -9,6 +9,8 @@ const ansi_escape_end = "m"
 
 const ansi_delimiter = ";"
 
+// The main style type which contains what colors and
+// effects are to be used for rendering
 pub opaque type Style {
   Style(
     foreground: color.Color,
