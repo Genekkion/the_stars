@@ -67,10 +67,9 @@ pub fn render(style: Style, s: String) -> String {
 fn render_fg_color(style: Style) -> String {
   case style.foreground {
     color.Color(r, g, b) -> {
-      let r_str = int.to_string(r)
-      let g_str = int.to_string(g)
-      let b_str = int.to_string(b)
-      "38;2;" <> r_str <> ";" <> g_str <> ";" <> b_str
+      [38, 2, r, g, b]
+      |> list.map(fn(v: Int) -> String { int.to_string(v) })
+      |> string.join(ansi_delimiter)
     }
     color.NoColor -> {
       "39"
@@ -81,10 +80,9 @@ fn render_fg_color(style: Style) -> String {
 fn render_bg_color(style: Style) -> String {
   case style.background {
     color.Color(r, g, b) -> {
-      let r_str = int.to_string(r)
-      let g_str = int.to_string(g)
-      let b_str = int.to_string(b)
-      "48;2;" <> r_str <> ";" <> g_str <> ";" <> b_str
+      [48, 2, r, g, b]
+      |> list.map(fn(v: Int) -> String { int.to_string(v) })
+      |> string.join(ansi_delimiter)
     }
     color.NoColor -> {
       "49"
