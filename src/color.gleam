@@ -2,7 +2,6 @@ import errors
 import gleam/float
 import gleam/int
 import gleam/list
-import gleam/pair
 import gleam/result
 import gleam/string
 import utils
@@ -84,9 +83,21 @@ fn parse_hex_values_aux(chars: List(String)) -> Result(Color, errors.ParseError)
     |> list.try_map(utils.hex_to_int)
     |> result.map_error(fn(_: Nil) -> errors.ParseError { errors.InvalidChar }),
   )
-  values
-  |> list.window_by_2()
-  |> list.map(fn(p: #(Int, Int)) -> Int { pair.first(p) + pair.second(p) })
+
+  // with fun: fn(acc, a) -> acc,
+  let values =
+    values
+    |> list.index_fold([], fn(acc, v, i) -> List(Int) {
+      case i % 2 == 0 {
+        True -> [v * { utils.hex_max + 1 }, ..acc]
+        False -> {
+          // The length is already accounted for.
+          let assert [first, ..acc] = acc
+          [first + v, ..acc]
+        }
+      }
+    })
+    |> list.reverse()
 
   let color =
     case list.length(values) {
@@ -95,7 +106,8 @@ fn parse_hex_values_aux(chars: List(String)) -> Result(Color, errors.ParseError)
       // ratio to compute the final alpha value which is
       // between 0 and 1
       4 -> list.append(values, [rgb_max])
-      _ -> panic as "length should already be checked previously"
+      _ -> panic as { "length should already be checked
+                previously " <> int.to_string(list.length(values)) }
     }
     |> list.index_fold(
       rgba(NoColor),
