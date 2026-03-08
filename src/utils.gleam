@@ -5,14 +5,14 @@ import gleam/string
 
 pub fn clamp_int(value: Int, min: Int, max: Int) -> Int {
   value
-  |> int.min(min)
-  |> int.max(max)
+  |> int.min(max)
+  |> int.max(min)
 }
 
 pub fn clamp_float(value: Float, min: Float, max: Float) -> Float {
   value
-  |> float.min(min)
-  |> float.max(max)
+  |> float.min(max)
+  |> float.max(min)
 }
 
 pub fn hex_to_int(value: String) -> Result(Int, Nil) {
@@ -38,9 +38,11 @@ pub fn hex_to_int(value: String) -> Result(Int, Nil) {
   }
 }
 
-const hex_min = 0
+pub const hex_min = 0
 
-const hex_max = 15
+pub const hex_max = 15
+
+pub const hex_cap = 16
 
 pub fn int_to_hex_char(value: Int) -> Result(String, errors.ParseError) {
   case value >= hex_min && value <= hex_max {
