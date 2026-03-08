@@ -1,4 +1,4 @@
-import log
+import the_stars/log
 
 pub fn main() {
   // Instead of using the raw style to render, you
