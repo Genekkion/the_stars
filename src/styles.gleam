@@ -10,7 +10,7 @@ const ansi_escape_end = "m"
 const ansi_delimiter = ";"
 
 // The main style type which contains what colors and
-// effects are to be used for rendering
+// effects are to be used for rendering.
 pub opaque type Style {
   Style(
     foreground: color.Color,
@@ -25,6 +25,7 @@ pub opaque type Style {
   )
 }
 
+// Creates a new style.
 pub fn new() -> Style {
   Style(
     color.new(0, 0, 0),
@@ -43,6 +44,7 @@ fn render_clear() -> String {
   "\u{001b}[0m"
 }
 
+// Renders the desired string with the style provided.
 pub fn render(style: Style, s: String) -> String {
   let codes =
     [

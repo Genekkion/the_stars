@@ -1,6 +1,7 @@
 import color
 import gleam/dict
 import gleam/io
+import gleam/string
 import styles
 
 pub type LogLevel {
@@ -21,18 +22,28 @@ fn log_level_val(level: LogLevel) {
   }
 }
 
+// The logger type contains level specific configs on how
+// to render the logs accordingly. In particular, the
+// prefix_fn is a special function in which the result
+// string will be printed before the tag. This is useful for
+// putting things such as timestamp generators, or
+// dynamic data.
 pub opaque type Logger {
   Logger(
     level: LogLevel,
     tags: dict.Dict(LogLevel, String),
     styles: dict.Dict(LogLevel, styles.Style),
+    prefix_fn: fn() -> String,
   )
 }
 
+// Creates a new logger.
 pub fn new() -> Logger {
-  Logger(Info, default_tags(), default_styles())
+  Logger(Info, default_tags(), default_styles(), fn() -> String { "" })
 }
 
+// Returns the default tags used in constructing a new
+// logger.
 pub fn default_tags() -> dict.Dict(LogLevel, String) {
   let def_tags = [
     #(Debug, " D "),
@@ -45,6 +56,8 @@ pub fn default_tags() -> dict.Dict(LogLevel, String) {
   dict.from_list(def_tags)
 }
 
+// Returns the default styles used in constructing a new
+// logger.
 pub fn default_styles() -> dict.Dict(LogLevel, styles.Style) {
   let style =
     styles.new()
@@ -109,11 +122,28 @@ pub fn set_tags(logger: Logger, level: LogLevel, tag: String) -> Logger {
   Logger(..logger, tags: new_tags)
 }
 
+pub fn get_prefix_fn(logger: Logger) -> fn() -> String {
+  logger.prefix_fn
+}
+
+pub fn set_prefix_fn(logger: Logger, prefix_fn: fn() -> String) -> Logger {
+  Logger(..logger, prefix_fn: prefix_fn)
+}
+
+// Prints the output to standard output, rendered using the
+// style of the level provided.
 pub fn log(logger: Logger, level: LogLevel, value: String) {
   case log_level_val(logger.level) <= log_level_val(level) {
     True -> {
       {
-        styles.render(get_style(logger, level), get_tag(logger, level))
+        {
+          let s = logger.prefix_fn()
+          case string.length(s) > 0 {
+            True -> s <> " "
+            False -> ""
+          }
+        }
+        <> styles.render(get_style(logger, level), get_tag(logger, level))
         <> " "
         <> value
       }
