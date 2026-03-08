@@ -1,9 +1,9 @@
-import errors
 import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
-import utils
+import the_stars/errors
+import the_stars/utils
 
 pub const rgb_min = 0
 

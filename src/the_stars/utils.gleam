@@ -1,7 +1,7 @@
-import errors
 import gleam/float
 import gleam/int
 import gleam/string
+import the_stars/errors
 
 pub fn clamp_int(value: Int, min: Int, max: Int) -> Int {
   value

@@ -1,6 +1,6 @@
 import gleeunit
 import gleeunit/should
-import utils
+import the_stars/utils
 
 pub fn main() {
   gleeunit.main()
