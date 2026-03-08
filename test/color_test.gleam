@@ -1,6 +1,6 @@
-import the_stars/color
 import gleeunit
 import gleeunit/should
+import the_stars/color
 
 pub fn main() {
   gleeunit.main()

@@ -1,7 +1,7 @@
-import the_stars/color
 import gleam/int
 import gleam/list
 import gleam/string
+import the_stars/color
 
 const ansi_escape_prefix = "\u{001b}["
 
