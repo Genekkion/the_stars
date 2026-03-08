@@ -3,7 +3,7 @@ version = "1.0.0"
 
 description = "A terminal styling and logging framework based off the Golang Charm Lipgloss framework."
 licences = ["Apache-2.0"]
-repository = { type = "github", user = "Genekkion", repo = "theStars" }
+repository = { type = "github", user = "Genekkion", repo = "the_stars" }
 # links = [{ title = "Website", href = "https://gleam.run" }]
 #
 # For a full reference of all the available options, you can have a look at
