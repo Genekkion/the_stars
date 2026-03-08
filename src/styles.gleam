@@ -27,7 +27,7 @@ pub opaque type Style {
 
 pub fn new() -> Style {
   Style(
-    color.new(0, 0, 0, 1.0),
+    color.new(0, 0, 0),
     color.NoColor,
     False,
     False,
@@ -64,7 +64,7 @@ pub fn render(style: Style, s: String) -> String {
 
 fn render_fg_color(style: Style) -> String {
   case style.foreground {
-    color.Color(r, g, b, _) -> {
+    color.Color(r, g, b) -> {
       let r_str = int.to_string(r)
       let g_str = int.to_string(g)
       let b_str = int.to_string(b)
@@ -78,7 +78,7 @@ fn render_fg_color(style: Style) -> String {
 
 fn render_bg_color(style: Style) -> String {
   case style.background {
-    color.Color(r, g, b, _) -> {
+    color.Color(r, g, b) -> {
       let r_str = int.to_string(r)
       let g_str = int.to_string(g)
       let b_str = int.to_string(b)

@@ -1,5 +1,4 @@
 import errors
-import gleam/float
 import gleam/int
 import gleam/list
 import gleam/result
@@ -10,12 +9,10 @@ pub const rgb_min = 0
 
 pub const rgb_max = 255
 
-pub const alpha_min = 0.0
-
-pub const alpha_max = 1.0
-
+// The Color constructor should not be used directly.
+// Instead use new or new_from_hex accordingly
 pub type Color {
-  Color(red: Int, green: Int, blue: Int, alpha: Float)
+  Color(red: Int, green: Int, blue: Int)
   NoColor
 }
 
@@ -32,7 +29,7 @@ fn rgb_to_hex_string(value: Int) -> Result(String, errors.ParseError) {
 }
 
 pub fn to_rgb_hex_string(color: Color) -> String {
-  let #(r, g, b, _) = rgba(color)
+  let #(r, g, b) = rgb(color)
   let assert Ok(r) = rgb_to_hex_string(r)
   let assert Ok(g) = rgb_to_hex_string(g)
   let assert Ok(b) = rgb_to_hex_string(b)
@@ -40,33 +37,14 @@ pub fn to_rgb_hex_string(color: Color) -> String {
   |> string.join("")
 }
 
-pub fn to_rgba_hex_string(color: Color) -> String {
-  let #(_, _, _, a) = rgba(color)
-
-  let rgb_str = to_rgb_hex_string(color)
-
-  let assert Ok(a) =
-    rgb_to_hex_string(utils.clamp_int(
-      float.round(a *. int.to_float(rgb_max)),
-      rgb_min,
-      rgb_max,
-    ))
-  [rgb_str, a]
-  |> string.join("")
-}
-
-pub fn new(red: Int, green: Int, blue: Int, alpha: Float) -> Color {
+pub fn new(red: Int, green: Int, blue: Int) -> Color {
   let red = utils.clamp_int(red, rgb_min, rgb_max)
   let green = utils.clamp_int(green, rgb_min, rgb_max)
   let blue = utils.clamp_int(blue, rgb_min, rgb_max)
-  let alpha = utils.clamp_float(alpha, alpha_min, alpha_max)
-  Color(red, green, blue, alpha)
+  Color(red, green, blue)
 }
 
-// Accepts the following formats in hex values with optional
-// starting '#':
-// RRGGBB (defaults to alpha of 1)
-// RRGGBBAA
+// Accepts the following format: "RRGGBB" or "#RRGGBB"
 pub fn new_from_hex(s: String) -> Result(Color, errors.ParseError) {
   let s = string.trim(s)
   case string.starts_with(s, "#") {
@@ -76,15 +54,12 @@ pub fn new_from_hex(s: String) -> Result(Color, errors.ParseError) {
 }
 
 fn parse_hex_values_aux(chars: List(String)) -> Result(Color, errors.ParseError) {
-  // use values <-
-  // result.map_error(fn())
   use values <- result.try(
     chars
     |> list.try_map(utils.hex_to_int)
     |> result.map_error(fn(_: Nil) -> errors.ParseError { errors.InvalidChar }),
   )
 
-  // with fun: fn(acc, a) -> acc,
   let values =
     values
     |> list.index_fold([], fn(acc, v, i) -> List(Int) {
@@ -102,54 +77,42 @@ fn parse_hex_values_aux(chars: List(String)) -> Result(Color, errors.ParseError)
   let color =
     case list.length(values) {
       3 -> values
-      // rgb_max is used here as we will be using the
-      // ratio to compute the final alpha value which is
-      // between 0 and 1
-      4 -> list.append(values, [rgb_max])
       _ -> panic as { "length should already be checked
                 previously " <> int.to_string(list.length(values)) }
     }
     |> list.index_fold(
-      rgba(NoColor),
-      fn(c: #(Int, Int, Int, Float), v: Int, i: Int) -> #(Int, Int, Int, Float) {
-        case i {
-          0 -> {
-            let #(_, g, b, a) = c
-            #(v, g, b, a)
+      // rgba(NoColor)
+      new(0, 0, 0),
+      fn(c: Color, v: Int, i: Int) -> Color {
+        case c {
+          NoColor -> panic as "should have a base color as accumulator"
+          Color(..) -> {
+            case i {
+              0 -> Color(..c, red: v)
+              1 -> Color(..c, green: v)
+              2 -> Color(..c, blue: v)
+              _ -> panic as "length should already be checked previously"
+            }
           }
-          1 -> {
-            let #(r, _, b, a) = c
-            #(r, v, b, a)
-          }
-          2 -> {
-            let #(r, g, _, a) = c
-            #(r, g, v, a)
-          }
-          3 -> {
-            let #(r, g, b, _) = c
-            #(r, g, b, int.to_float(v) /. int.to_float(rgb_max))
-          }
-          _ -> panic as "length should already be checked previously"
         }
       },
     )
 
-  let #(r, g, b, a) = color
-  Ok(new(r, g, b, a))
+  Ok(color)
 }
 
-pub fn parse_hex_values(s: String) -> Result(Color, errors.ParseError) {
+fn parse_hex_values(s: String) -> Result(Color, errors.ParseError) {
   let chars = string.to_graphemes(s)
 
   case list.length(chars) {
-    6 | 8 -> parse_hex_values_aux(chars)
+    6 -> parse_hex_values_aux(chars)
     _ -> Error(errors.InvalidLength)
   }
 }
 
-pub fn rgba(color: Color) -> #(Int, Int, Int, Float) {
+pub fn rgb(color: Color) -> #(Int, Int, Int) {
   case color {
-    Color(r, g, b, a) -> #(r, g, b, a)
-    NoColor -> #(0, 0, 0, 0.0)
+    Color(r, g, b) -> #(r, g, b)
+    NoColor -> #(rgb_min, rgb_min, rgb_min)
   }
 }
