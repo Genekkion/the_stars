@@ -59,7 +59,6 @@ pub fn default_styles() -> dict.Dict(LogLevel, styles.Style) {
   }
 
   let debug_style = create_style("#FFFFFF", "#414868")
-  // let info_style = create_style("#FFFFFF", "#485E30")
   let info_style = create_style("#FFFFFF", "#FF0000")
   let warn_style = create_style("#FFFFFF", "#FF9E64")
   let error_style = create_style("#FFFFFF", "#F7768E")
