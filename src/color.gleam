@@ -15,7 +15,7 @@ pub const alpha_min = 0.0
 
 pub const alpha_max = 1.0
 
-pub opaque type Color {
+pub type Color {
   Color(red: Int, green: Int, blue: Int, alpha: Float)
   NoColor
 }
@@ -68,10 +68,10 @@ pub fn new(red: Int, green: Int, blue: Int, alpha: Float) -> Color {
 // starting '#':
 // RRGGBB (defaults to alpha of 1)
 // RRGGBBAA
-pub fn from_hex(s: String) -> Result(Color, errors.ParseError) {
+pub fn new_from_hex(s: String) -> Result(Color, errors.ParseError) {
   let s = string.trim(s)
   case string.starts_with(s, "#") {
-    True -> from_hex(string.drop_start(s, 1))
+    True -> new_from_hex(string.drop_start(s, 1))
     False -> parse_hex_values(s)
   }
 }

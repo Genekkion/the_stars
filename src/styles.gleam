@@ -1,152 +1,168 @@
-import gleam/dict
-import gleam/io
-import gleam/string_builder
-import types.{type Color, Color24}
-import utils
+import color
+import gleam/int
+import gleam/list
+import gleam/string
 
-pub type Style {
-  Style(map: dict.Dict(String, String))
+const ansi_escape_prefix = "\u{001b}["
+
+const ansi_escape_end = "m"
+
+const ansi_delimiter = ";"
+
+pub opaque type Style {
+  Style(
+    foreground: color.Color,
+    background: color.Color,
+    bold: Bool,
+    dim: Bool,
+    italic: Bool,
+    underline: Bool,
+    blink: Bool,
+    invert: Bool,
+    strikethrough: Bool,
+  )
 }
 
-const style_foreground = "foreground"
-
-const style_background = "background"
-
-const style_bold = "bold"
-
-const style_underline = "underline"
-
-const style_italic = "italic"
-
-const style_dim = "dim"
-
-const style_blink = "blink"
-
-const style_invert = "invert"
-
-const style_strikethrough = "strikethrough"
-
-fn render_boolean(style: Style, key: String, true_value: String) -> String {
-  case get(style, key) {
-    "true" -> true_value
-    _ -> ""
-  }
+pub fn new() -> Style {
+  Style(
+    color.new(0, 0, 0, 1.0),
+    color.NoColor,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+  )
 }
 
-pub fn new_style() -> Style {
-  Style(dict.new())
-  |> foreground(Color24("clear"))
-  |> background(Color24("clear"))
-  |> bold(False)
-  |> underline(False)
-  |> italic(False)
-  |> dim(False)
-  |> blink(False)
-  |> invert(False)
-  |> strikethrough(False)
+fn render_clear() -> String {
+  "\u{001b}[0m"
 }
 
-fn render_color(style: Style, is_foreground: Bool) -> String {
-  let key = {
-    case is_foreground {
-      True -> style_foreground
-      False -> style_background
+pub fn render(style: Style, s: String) -> String {
+  let codes =
+    [
+      render_fg_color(style),
+      render_bg_color(style),
+      render_boolean(style.bold, "1"),
+      render_boolean(style.dim, "2"),
+      render_boolean(style.italic, "3"),
+      render_boolean(style.underline, "4"),
+      render_boolean(style.blink, "5"),
+      render_boolean(style.invert, "7"),
+      render_boolean(style.strikethrough, "9"),
+    ]
+    |> list.filter(fn(v: String) -> Bool { string.length(v) > 0 })
+    |> string.join(ansi_delimiter)
+
+  ansi_escape_prefix <> codes <> ansi_escape_end <> s <> render_clear()
+}
+
+fn render_fg_color(style: Style) -> String {
+  case style.foreground {
+    color.Color(r, g, b, _) -> {
+      let r_str = int.to_string(r)
+      let g_str = int.to_string(g)
+      let b_str = int.to_string(b)
+      "38;2;" <> r_str <> ";" <> g_str <> ";" <> b_str
     }
-  }
-  let ansi_code = utils.get_ansi_code(Color24(get(style, key)))
-  // io.debug(ansi_code)
-  case ansi_code {
-    "clear" -> "\u{001b}[0m"
-    _ -> {
-      case is_foreground {
-        True -> "\u{001b}[38;2;" <> ansi_code
-        False -> "\u{001b}[48;2;" <> ansi_code
-      }
-    }
-  }
-}
-
-pub fn render(style: Style, value: String) -> String {
-  let builder =
-    string_builder.new()
-    |> string_builder.append(render_color(style, True))
-    |> string_builder.append(render_color(style, False))
-    |> string_builder.append(render_boolean(style, style_bold, "\u{001b}[1m"))
-    |> string_builder.append(render_boolean(style, style_dim, "\u{001b}[2m"))
-    |> string_builder.append(render_boolean(style, style_italic, "\u{001b}[3m"))
-    |> string_builder.append(render_boolean(
-      style,
-      style_underline,
-      "\u{001b}[4m",
-    ))
-    |> string_builder.append(render_boolean(style, style_blink, "\u{001b}[5m"))
-    |> string_builder.append(render_boolean(style, style_invert, "\u{001b}[7m"))
-    |> string_builder.append(render_boolean(
-      style,
-      style_strikethrough,
-      "\u{001b}[9m",
-    ))
-    |> string_builder.append(value)
-    |> string_builder.append("\u{001b}[0m")
-
-  string_builder.to_string(builder)
-}
-
-fn insert(style: Style, key: String, value: String) -> Style {
-  Style(dict.insert(style.map, key, value))
-}
-
-fn get(style: Style, key: String) -> String {
-  case dict.get(style.map, key) {
-    Ok(value) -> value
-
-    Error(err) -> {
-      io.debug(key)
-      io.debug(err)
-      panic as "not defined"
+    color.NoColor -> {
+      "39"
     }
   }
 }
 
-fn set_boolean_style(style: Style, key: String, value: Bool) -> Style {
-  case value {
-    True -> insert(style, key, "true")
-    False -> insert(style, key, "false")
+fn render_bg_color(style: Style) -> String {
+  case style.background {
+    color.Color(r, g, b, _) -> {
+      let r_str = int.to_string(r)
+      let g_str = int.to_string(g)
+      let b_str = int.to_string(b)
+      "48;2;" <> r_str <> ";" <> g_str <> ";" <> b_str
+    }
+    color.NoColor -> {
+      "49"
+    }
   }
 }
 
-pub fn foreground(style: Style, color: Color) -> Style {
-  insert(style, style_foreground, color.value)
+fn render_boolean(flag: Bool, value: String) -> String {
+  case flag {
+    True -> value
+    False -> ""
+  }
 }
 
-pub fn background(style: Style, color: Color) -> Style {
-  insert(style, style_background, color.value)
+pub fn set_foreground(style: Style, color: color.Color) -> Style {
+  Style(..style, foreground: color)
 }
 
-pub fn bold(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_bold, value)
+pub fn get_foreground(style: Style) -> color.Color {
+  style.foreground
 }
 
-pub fn underline(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_underline, value)
+pub fn set_background(style: Style, color: color.Color) -> Style {
+  Style(..style, background: color)
 }
 
-pub fn italic(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_italic, value)
+pub fn get_background(style: Style) -> color.Color {
+  style.background
 }
 
-pub fn dim(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_dim, value)
+pub fn set_bold(style: Style, value: Bool) -> Style {
+  Style(..style, bold: value)
 }
 
-pub fn blink(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_blink, value)
+pub fn get_bold(style: Style) -> Bool {
+  style.bold
 }
 
-pub fn invert(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_invert, value)
+pub fn set_dim(style: Style, value: Bool) -> Style {
+  Style(..style, dim: value)
 }
 
-pub fn strikethrough(style: Style, value: Bool) -> Style {
-  set_boolean_style(style, style_strikethrough, value)
+pub fn get_dim(style: Style) -> Bool {
+  style.dim
+}
+
+pub fn set_italic(style: Style, value: Bool) -> Style {
+  Style(..style, italic: value)
+}
+
+pub fn get_italic(style: Style) -> Bool {
+  style.italic
+}
+
+pub fn set_underline(style: Style, value: Bool) -> Style {
+  Style(..style, underline: value)
+}
+
+pub fn get_underline(style: Style) -> Bool {
+  style.underline
+}
+
+pub fn set_blink(style: Style, value: Bool) -> Style {
+  Style(..style, blink: value)
+}
+
+pub fn get_blink(style: Style) -> Bool {
+  style.blink
+}
+
+pub fn set_invert(style: Style, value: Bool) -> Style {
+  Style(..style, invert: value)
+}
+
+pub fn get_invert(style: Style) -> Bool {
+  style.invert
+}
+
+pub fn set_strikethrough(style: Style, value: Bool) -> Style {
+  Style(..style, strikethrough: value)
+}
+
+pub fn get_strikethrough(style: Style) -> Bool {
+  style.strikethrough
 }
